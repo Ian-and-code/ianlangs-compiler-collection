@@ -1,0 +1,103 @@
+#pragma once
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <any>
+#include <memory>
+#include <functional>
+namespace flowBuffer {
+
+template <typename T = char>
+    class __fcpp__strTypeBuffer__fcpp__ : public std::basic_string<T> {
+    private:
+        mutable std::vector<T> buffer;   // buffer persistente
+        mutable size_t last_size = 0;    // para saber si hay que reconstruir
+
+    public:
+        using base = std::basic_string<T>;
+        using base::base; // hereda constructores
+
+        // Constructor desde const T*
+        __fcpp__strTypeBuffer__fcpp__(const T* s) : base(s) {}
+
+        // Constructor desde std::basic_string<T>
+        __fcpp__strTypeBuffer__fcpp__(const base& s) : base(s) {}
+
+        // Crear desde std::basic_string<T> estático
+        static __fcpp__strTypeBuffer__fcpp__<T> fromCppStr(const base& i) {
+            return i;
+        }
+
+        // Conversión a std::basic_string<T>
+        operator base() const {
+            return base(this->c_str());
+        }
+
+        // Conversión implícita a const T*
+        inline operator const T*() const {
+            return this->c_str();
+        }
+
+        // Conversión explícita a T* editable
+        inline explicit operator T*() const {
+            if (this->size() != last_size) {
+                buffer.resize(this->size() + 1);
+                std::copy(this->begin(), this->end(), buffer.begin());
+                buffer[this->size()] = '\0';
+                last_size = this->size();
+            }
+            return buffer.data();
+        }
+    };
+
+
+
+}
+
+namespace flow {
+    using str = ::flowBuffer::__fcpp__strTypeBuffer__fcpp__<char>;
+    using wstr = ::flowBuffer::__fcpp__strTypeBuffer__fcpp__<wchar_t>;
+    using any = std::any;
+
+    using std::any_cast;
+
+    template <typename T>
+    T any_cast(any* obj) {
+        return std::any_cast<T>(*obj);
+    }
+
+    template <typename T>
+    T any_cast(const any* obj) {
+        return std::any_cast<T>(*obj);
+    }
+
+    using anyP = std::shared_ptr<any>;
+
+    template <typename R,typename... A>
+    using Function = std::function<R(A...)>;
+    
+    class Defer {
+        public: using fn = Function<void>;
+        private:
+            fn func;
+        public:
+            Defer() : func([](){}) {}
+            Defer(fn f) : func(f) {}
+
+            ~Defer() {
+                if (func)
+                    func();
+            }
+
+            template<typename F>
+            Defer& operator=(F&& f) {
+                func = std::forward<F>(f);
+                return *this;
+            }
+
+
+            fn& operator*() {
+                return func;
+            }
+    };
+}

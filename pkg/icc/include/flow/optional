@@ -1,0 +1,86 @@
+#pragma once
+#include <variant>
+#include <typeinfo>
+#include <type_traits>
+#include <stdexcept>
+
+namespace flow {
+
+    struct None_t{};
+    constexpr inline None_t None{};
+
+    // ------------------- optional para tipos T -------------------
+    template <typename T>
+    class optional {
+    private:
+        std::variant<T, None_t> value;
+
+    public:
+        optional(None_t realvalue = None) : value(realvalue) {}
+        optional(T realvalue) : value(realvalue) {}
+
+        optional& operator=(T v) {
+            value = v;
+            return *this;
+        }
+
+        bool isNone() const noexcept {
+            return std::holds_alternative<None_t>(value);
+        }
+
+        T get() const {
+            if (isNone()) throw std::runtime_error("Accessing None value");
+            return std::get<T>(value);
+        }
+
+        const std::type_info& type() const noexcept {
+            return isNone() ? typeid(None_t) : typeid(T);
+        }
+    };
+
+    // ------------------- optional para punteros T* -------------------
+    template <typename T>
+    class optional<T*> {
+    private:
+        std::variant<T*, None_t*> value;
+
+    public:
+        optional() : value(&None) {}
+        optional(T* realvalue) : value(realvalue) {}
+
+        optional& operator=(T* v) {
+            value = v;
+            return *this;
+        }
+
+        bool isNone() const noexcept {
+            return std::holds_alternative<None_t*>(value);
+        }
+
+        // devuelve T* si hay valor, o &None como sentinel
+        T* get() const noexcept {
+            if (isNone()) return reinterpret_cast<T*>(&None);
+            return std::get<T*>(value);
+        }
+
+        // acceso estilo puntero
+        T& operator*() const {
+            if (isNone()) throw std::runtime_error("Dereferencing None pointer");
+            return *std::get<T*>(value);
+        }
+
+        const std::type_info& type() const noexcept {
+            return isNone() ? typeid(None_t*) : typeid(T*);
+        }
+    };
+
+    // ------------------- especializaciones -------------------
+    template <>
+    class optional<None_t> {
+    public:
+        const None_t get() const noexcept { return None; }
+        bool isNone() const noexcept { return true; }
+        const std::type_info& type() const noexcept { return typeid(None_t); }
+    };
+
+}

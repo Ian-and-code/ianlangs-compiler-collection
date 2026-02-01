@@ -1,0 +1,42 @@
+#pragma once
+#include <flow/types>
+#include <vector>
+#include <iostream>
+namespace flow {
+    class error {
+        private:
+            bool conditional = false;
+            std::vector<flow::str> errors;
+        public:
+            error(bool conditional = false) {
+                this->conditional = conditional;
+            }
+
+            error& append(std::string errormsg) {
+                errors.push_back(flow::str::fromCppStr(errormsg));
+                return *this;
+            }
+
+            void raise() {
+                raise(1);
+            }
+
+            void raise(int n) {
+                if (errors.size() == 0 && conditional) {
+                    return;
+                }
+                for (auto i : errors)  {
+                    std::cerr << i;
+                }
+                std::cerr << "\n";
+                if (n >= 0) std::exit(n);
+            }
+    };
+
+    void raise(std::string msg = "", int n = 1) {
+        error err(true);
+        err.append(msg).raise(n);
+    }
+
+    
+}

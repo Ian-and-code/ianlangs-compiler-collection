@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="icc" Language="1033" Version="2.4.0" Manufacturer="IanLangs" UpgradeCode="PUT-GUID-HERE">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="icc">
+          <Directory Id="BIN" Name="bin">
+            <Component Id="CMP_ifc.exe" Guid="PUT-GUID-HERE">
+              <File Id="ifc" Source="bin/ifc.exe" KeyPath="yes"/>
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <Feature Id="MainFeature" Title="icc" Level="1">
+      <ComponentRef Id="CMP_ifc.exe"/>
+    </Feature>
+  </Product>
+</Wix>

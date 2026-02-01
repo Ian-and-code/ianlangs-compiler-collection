@@ -1,0 +1,9 @@
+Package: icc
+Version: 2.4.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: libc6, libstdc++6, bash, nlohmann-json3-dev
+Maintainer: Ian <ian@local>
+Description: ianlangs compiler collection
+ compilers -> ifc (flow c++)

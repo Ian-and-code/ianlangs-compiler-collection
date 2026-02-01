@@ -1,0 +1,41 @@
+#pragma once
+#include <string>
+#include <fstream>
+#include <sstream>
+
+namespace flow {
+
+    class File {
+        std::string path;
+
+    public:
+        explicit File(const std::string& p) : path(p) {}
+
+        std::string read() const {
+            std::ifstream f(path);
+            if (!f) return "";
+            std::ostringstream ss;
+            ss << f.rdbuf();
+            f.close();
+            return ss.str();
+        }
+
+        void write(const std::string& data) const {
+            std::ofstream f(path, std::ios::trunc);
+            if (!f) return;
+            f << data;
+            f.close();
+        }
+
+        void append(const std::string& data) const {
+            std::ofstream f(path, std::ios::app);
+            f << data;
+            f.close();
+        }
+    };
+
+    inline File openFile(const std::string& path) {
+        return File(path);
+    }
+
+}

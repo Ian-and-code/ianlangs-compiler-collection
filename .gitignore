@@ -1,0 +1,20 @@
+# Ignorar carpetas de compilación y binarios
+**/no_github/
+
+# Carpetas de IDEs y OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+*.bak
+
+# Excepciones: siempre trackear fuentes y scripts
+!**/*.nim
+!**/*.fcpp
+!**/*.sh
+!LICENSE.txt
+!**/src/**
+!**/tests/**
+!pkg/
+!tools/
+!tools/ifc/

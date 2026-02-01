@@ -1,0 +1,8 @@
+#pragma once
+#include <nlohmannJsonCompressed.hpp>
+
+namespace flow {
+    using json = nlohmann::json; 
+    using ordered_json = nlohmann::ordered_json;
+    using jsonP = nlohmann::json_pointer<json>;
+}

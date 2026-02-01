@@ -1,0 +1,157 @@
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <limits>
+#include <tuple>
+#include <typeinfo>
+#include <type_traits>
+
+#include <flow/types>
+#include <flow/errors>
+
+namespace flowBuffer {
+
+    // ---------- utilidades internas (NO API) ----------
+
+    inline flow::str type_name(const std::type_info& ti) {
+        return flow::str(ti.name());
+    }
+
+    template<typename T>
+    flow::str to_value(const T& v) {
+        if constexpr (requires { flow::str(v); }) {
+            return flow::str(v);
+        } else if constexpr (requires { std::to_string(v); }) {
+            return flow::str(std::to_string(v));
+        } else {
+            return flow::str("<unprintable>");
+        }
+    }
+
+    template<typename T>
+    flow::str to_ptr(const T& v) {
+        if constexpr (std::is_pointer_v<T>) {
+            if (!v) return flow::str("<null>");
+            return to_value(*v);
+        } else {
+            static_assert(std::is_pointer_v<T>,
+                "flow::printf: ${ptr} requiere un puntero");
+            return {};
+        }
+    }
+
+    template<typename T>
+    flow::str to_type(const T&) {
+        return type_name(typeid(T));
+    }
+
+    template<typename T>
+    flow::str resolve_token(const flow::str& token, const T& arg) {
+        if (token == "value") return to_value(arg);
+        if (token == "ptr")   return to_ptr(arg);
+        if (token == "type")  return to_type(arg);
+
+        throw std::runtime_error(
+            flow::str("flow::printf: placeholder desconocido ${") + token + "}"
+        );
+    }
+
+    template <typename T>
+    inline void _print_one(const T& v) {
+        std::cout << v;
+    }
+
+    template <typename T, typename... Ts>
+    inline void _print_one(const T& v, const Ts&... rest) {
+        std::cout << v;
+        _print_one(rest...);
+    }
+}
+
+namespace flow {
+
+    // ---------- printf / printfln ----------
+
+    template<typename... Args>
+    void printf(const flow::str& fmt, Args&&... args) {
+        std::tuple<Args...> tup(args...);
+        constexpr std::size_t N = sizeof...(Args);
+
+        std::size_t arg_index = 0;
+
+        for (std::size_t i = 0; i < fmt.size(); ++i) {
+            if (fmt[i] == '$' && i + 1 < fmt.size() && fmt[i + 1] == '{') {
+                auto end = fmt.find('}', i);
+                if (end == flow::str::npos)
+                    throw std::runtime_error("flow::printf: placeholder sin cerrar");
+
+                if (arg_index >= N)
+                    throw std::runtime_error("flow::printf: faltan argumentos");
+
+                flow::str token = fmt.substr(i + 2, end - i - 2);
+                flow::str out;
+
+                std::apply([&](auto&&... elems) {
+                    std::size_t idx = 0;
+                    ((idx++ == arg_index
+                        ? out = flowBuffer::resolve_token(token, elems)
+                        : void()), ...);
+                }, tup);
+
+                std::cout << out.c_str();
+                ++arg_index;
+                i = end;
+            } else {
+                std::cout << fmt[i];
+            }
+        }
+    }
+
+    template<typename... Args>
+    void printfln(const flow::str& fmt, Args&&... args) {
+        printf(fmt, std::forward<Args>(args)...);
+        std::cout << '\n';
+    }
+
+    // ---------- print / println ----------
+
+    template <typename... Ts>
+    inline void print(const Ts&... args) {
+        flowBuffer::_print_one(args...);
+    }
+
+    template <typename... Ts>
+    inline void println(const Ts&... args) {
+        flowBuffer::_print_one(args...);
+        std::cout << '\n';
+    }
+
+    // ---------- input ----------
+
+    inline void input(const std::string& ask, std::string& var) {
+        print(ask);
+        std::getline(std::cin, var);
+    }
+
+    inline void input(const std::string& ask, flow::str& var) {
+        std::string buffer;
+        print(ask);
+        std::getline(std::cin, buffer);
+        var = flow::str::fromCppStr(buffer);
+    }
+
+    template <typename T>
+    inline void input(const std::string& ask, T& var) {
+        print(ask);
+        std::cin >> var;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
+    inline flow::str input(const std::string& ask) {
+        print(ask);
+        std::string buffer;
+        std::getline(std::cin, buffer);
+        return flow::str::fromCppStr(buffer);
+    }
+}
