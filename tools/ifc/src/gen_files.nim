@@ -19,7 +19,10 @@ proc initDirs*() =
 # ------------------------
 # Generar archivo .cpp solo si no existe
 # ------------------------
-proc genCppFile*(name, code: string): string =
-  let path = cacheDir / (name & ".cpp")
+proc genCppFile*(name, code: string, hpp: bool = false):string =
+  var ext: string
+  if hpp: ext = ".hpp"
+  else: ext = ".cpp"
+  let path = cacheDir / (name & ext)
   writeFile(path, code)
   return path

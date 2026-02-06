@@ -1,3 +1,4 @@
+// usr/include/flow/types
 #pragma once
 #include <string>
 #include <vector>
@@ -5,6 +6,7 @@
 #include <any>
 #include <memory>
 #include <functional>
+#include <type_traits>
 namespace flowBuffer {
 
 template <typename T = char>
@@ -27,6 +29,20 @@ template <typename T = char>
         static __fcpp__strTypeBuffer__fcpp__<T> fromCppStr(const base& i) {
             return i;
         }
+
+        static __fcpp__strTypeBuffer__fcpp__<T> fromInteger(long long i) {
+            if constexpr (std::is_same_v<T, char>) {
+                return std::to_string(i);
+            } else if constexpr (std::is_same_v<T, wchar_t>) {
+                return std::to_wstring(i);
+            } else {
+                static_assert(
+                    std::is_same_v<T, char> || std::is_same_v<T, wchar_t>,
+                    "flow::str only supports char or wchar_t"
+                );
+            }
+        }
+
 
         // Conversión a std::basic_string<T>
         operator base() const {

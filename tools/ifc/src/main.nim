@@ -29,7 +29,7 @@ when isMainModule:
     quit(0)
 
   if paramCount() == 1 and args[0] == "-v":
-    echo "ifc version 3.0.1\nflow c++ version 3.2"
+    echo "ifc version 3.1\nflow c++ version 3.2"
     quit(0)
     
   # --- Modo solo cpp: -cppX ---
@@ -56,7 +56,14 @@ when isMainModule:
       if res != 0:
         quit("Error compilando " & cppPath, QuitFailure)
       quit(0)
-
+  var `C++`: string = ""
+  if paramCount() > 2 and args[1].startsWith("-compiler="):
+    let arg_c = args[1]
+    if arg_c.len() > 10:
+      `C++` = arg_c[10..^1]
+  else:
+    `C++` = "g++"
+    
   # --- Flujo normal ---
   initDirs()
 
@@ -86,8 +93,8 @@ when isMainModule:
     let cpp = transpile(src)
 
     let name = file.extractFilename.changeFileExt("")
-    let cppPath = genCppFile(name, cpp)
+    let cppPath = genCppFile(name, cpp, file.endsWith(".fhpp"))
     cppToCompile.add(cppPath)
 
   # Compilar y linkear solo esos
-  compileAll(flags, cppToCompile, outName)
+  compileAll(flags, cppToCompile, outName, `C++`)

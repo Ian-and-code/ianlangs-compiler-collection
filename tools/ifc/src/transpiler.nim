@@ -157,6 +157,24 @@ proc transpile*(RawCode: string): string =
 
             flowUsed = true
             continue
+      
+      # #import
+      if code.substr(i, min(i+6, n-1)) == "#import":
+        let prev = if i > 0: code[i-1] else: '\0'
+        let nextc = if i+7 < n: code[i+7] else: '\0'
+
+        if isBoundary(prev, nextc):
+          cppCode.add "#include \""
+          var j = i+7
+          var name = ""
+          while j < n:
+            if code[j] == '\n':
+              cppCode.add name.strip() & ".hpp\"\n"
+              i = j+1
+              break
+            name.add code[j]
+            inc j
+          continue
 
       # until
       if code.substr(i, min(i+4, n-1)) == "until":

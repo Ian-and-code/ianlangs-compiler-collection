@@ -4,12 +4,14 @@ import gen_files
 # ------------------------
 # Compilar solo los cpp que le pases
 # ------------------------
-proc compileObjs(flags: seq[string], cppFilesToCompile: seq[string]): seq[string] =
+proc compileObjs(flags: seq[string], cppFilesToCompile: seq[string], compiler: string): seq[string] =
   var objs: seq[string] = @[]
   for cpp in cppFilesToCompile:
+    if cpp.endsWith(".hpp"):
+      continue
     let name = cpp.extractFilename.changeFileExt("")
     let objPath = objDir / (name & ".o")
-    let cmd = @["g++", "-c", "-std=c++20", cpp, "-o", objPath] & flags
+    let cmd = @[compiler, "-c", cpp, "-o", objPath] & flags
     let res = execCmd(cmd.join(" "))
     if res != 0:
       quit("Error compilando " & cpp, QuitFailure)
@@ -19,10 +21,10 @@ proc compileObjs(flags: seq[string], cppFilesToCompile: seq[string]): seq[string
 # ------------------------
 # Linkear solo los objetos dados
 # ------------------------
-proc linkObjs(outName: string, objs: seq[string]) =
+proc linkObjs(outName: string, objs: seq[string], compiler: string) =
   if objs.len == 0:
     quit("No hay objetos para linkear", QuitFailure)
-  let linkCmd = @["g++"] & objs & @["-o", distDir / outName]
+  let linkCmd = @[compiler] & objs & @["-o", distDir / outName]
   let res = execCmd(linkCmd.join(" "))
   if res != 0:
     quit("Error linkeando", QuitFailure)
@@ -30,7 +32,7 @@ proc linkObjs(outName: string, objs: seq[string]) =
 # ------------------------
 # Función principal: compilar solo los archivos pasados y linkear solo sus objetos
 # ------------------------
-proc compileAll*(flags: seq[string], cppFilesToCompile: seq[string], outName: string = "app") =
+proc compileAll*(flags: seq[string], cppFilesToCompile: seq[string], outName: string = "app", compiler: string = "g++") =
   initDirs()
-  let objs = compileObjs(flags, cppFilesToCompile)
-  linkObjs(outName, objs)
+  let objs = compileObjs(flags, cppFilesToCompile, compiler)
+  linkObjs(outName, objs, compiler)

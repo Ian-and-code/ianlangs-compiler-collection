@@ -17,18 +17,14 @@ namespace flow {
                 return *this;
             }
 
-            void raise() {
-                raise(1);
-            }
-
-            void raise(int n) {
+            void raise(int n = 1, bool addLineJump = true) {
                 if (errors.size() == 0 && conditional) {
                     return;
                 }
                 for (auto i : errors)  {
                     std::cerr << i;
                 }
-                std::cerr << "\n";
+                if (addLineJump) std::cerr << "\n";
                 if (n >= 0) std::exit(n);
             }
     };
